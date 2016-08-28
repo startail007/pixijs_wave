@@ -63,7 +63,9 @@ d3.select("#canvas01")
     })*/
 var canvas01 = document.getElementById("canvas01");
 var renderer = new PIXI.WebGLRenderer(600, 600, {
-    view: canvas01
+    view: canvas01,
+    //transparent: true
+    antialias: true
 });
 
 var gl = renderer.view.getContext('webgl');
@@ -81,6 +83,7 @@ var textures = d3.range(rrrmin, rrrmax + 0.1, 0.1)
         //circle.beginFill(0xff0000);
         circle.beginFill(parseInt(color(d).substr(1), 16));
         circle.drawCircle(0, 0, d);
+        circle.endFill();
         var texture = circle.generateCanvasTexture(3 * 3, PIXI.SCALE_MODES.DEFAULT);
         return texture;
     });
@@ -91,8 +94,12 @@ nodes.forEach(function(d, i) {
     var sprite = new PIXI.Sprite();
     var tempr = parseInt(rrrr(d.r));
     sprite.texture = textures[tempr];
-    sprite.x = d.x - d.r;
-    sprite.y = d.y - d.r;
+    //sprite.position.x = d.x;
+    //sprite.position.y = d.y;
+    //sprite.anchor.x = 0.5;
+    //sprite.anchor.y = 0.5;
+    sprite.position.set(d.x, d.y);
+    sprite.anchor.set(0.5);
     stage.addChild(sprite);
     sprites[i] = sprite;
 });
@@ -112,7 +119,63 @@ point01[0] = {
     y: 300,
     s: 1
 };
-d3.select("#Box01")
+point01[1] = {
+    x: 200,
+    y: 400,
+    s: 1
+};
+point01[2] = {
+    x: 400,
+    y: 400,
+    s: 1
+};
+point01.forEach(function(d, i) {
+    var circle = new PIXI.Graphics();
+    circle.beginFill(0xffffff);
+    circle.drawCircle(0, 0, 10);
+    circle.endFill();
+    circle.beginFill(0x000000);
+    circle.drawCircle(0, 0, 8);
+    circle.endFill();
+    circle.position.set(point01[i].x, point01[i].y);
+    circle.pivot.set(0.5);
+    circle.interactive = true;
+    circle.buttonMode = true;
+    circle
+        .on('mousedown', onDragStart)
+        .on('touchstart', onDragStart)
+        .on('mouseup', onDragEnd)
+        .on('mouseupoutside', onDragEnd)
+        .on('touchend', onDragEnd)
+        .on('touchendoutside', onDragEnd)
+        .on('mousemove', onDragMove.bind(circle, i))
+        .on('touchmove', onDragMove.bind(circle, i));
+    stage.addChild(circle);
+});
+
+function onDragStart(event) {
+    this.data = event.data;
+    this.alpha = 0.5;
+    this.dragging = true;
+}
+
+function onDragEnd() {
+    this.alpha = 1;
+    this.dragging = false;
+    this.data = null;
+}
+
+function onDragMove(i) {
+    if (this.dragging) {
+        var newPosition = this.data.getLocalPosition(this.parent);
+        this.position.x = newPosition.x;
+        this.position.y = newPosition.y;
+        point01[i].x = this.position.x;
+        point01[i].y = this.position.y;
+    }
+}
+
+/*d3.select("#Box01")
     .style('left', point01[0].x - $("#Box01").width() / 2 + 'px')
     .style('top', point01[0].y - $("#Box01").height() / 2 + 'px')
 $("#Box01").draggable({
@@ -122,7 +185,7 @@ $("#Box01").draggable({
         point01[0].x = offset.left + $("#Box01").width() / 2;
         point01[0].y = offset.top + $("#Box01").height() / 2;
     },
-});
+});*/
 
 function render() {
     angle -= 10;
@@ -148,8 +211,9 @@ function render() {
         }
         var tempr = parseInt(rrrr(r0));
         sprites[i].texture = textures[tempr];
-        sprites[i].x = point02.x - r0;
-        sprites[i].y = point02.y - r0;
+        //sprites[i].position.x = point02.x;
+        //sprites[i].position.y = point02.y;
+        sprites[i].position.set(point02.x, point02.y);
     });
     renderer.render(stage);
     requestAnimationFrame(render);
